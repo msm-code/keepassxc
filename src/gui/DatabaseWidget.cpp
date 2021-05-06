@@ -79,6 +79,7 @@ DatabaseWidget::DatabaseWidget(QSharedPointer<Database> db, QWidget* parent)
     , m_keepass1OpenWidget(new KeePass1OpenWidget(this))
     , m_opVaultOpenWidget(new OpVaultOpenWidget(this))
     , m_groupView(new GroupView(m_db.data(), m_mainSplitter))
+    , m_tagView(new QListView(m_mainSplitter))
     , m_saveAttempts(0)
     , m_entrySearcher(new EntrySearcher(false))
 {
@@ -93,19 +94,29 @@ DatabaseWidget::DatabaseWidget(QSharedPointer<Database> db, QWidget* parent)
     hbox->addWidget(m_mainSplitter);
     m_mainWidget->setLayout(mainLayout);
 
+    auto* leftHandSideWidget = new QWidget(m_mainSplitter);
+    auto* leftHandSideVBox = new QVBoxLayout();
+    auto tagModel = new TagModel(m_db->rootGroup());
+    m_tagView->setModel(tagModel);
+    connect(m_tagView, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(filterByTag(QModelIndex)));
+
+    leftHandSideVBox->addWidget(m_groupView);
+    leftHandSideVBox->addWidget(m_tagView);
+    leftHandSideWidget->setLayout(leftHandSideVBox);
+
     auto* rightHandSideWidget = new QWidget(m_mainSplitter);
-    auto* vbox = new QVBoxLayout();
-    vbox->setMargin(0);
-    vbox->addWidget(m_searchingLabel);
+    auto* rightHandSideVBox = new QVBoxLayout();
+    rightHandSideVBox->setMargin(0);
+    rightHandSideVBox->addWidget(m_searchingLabel);
 #ifdef WITH_XC_KEESHARE
-    vbox->addWidget(m_shareLabel);
+    rightHandSideVBox->addWidget(m_shareLabel);
 #endif
-    vbox->addWidget(m_previewSplitter);
-    rightHandSideWidget->setLayout(vbox);
+    rightHandSideVBox->addWidget(m_previewSplitter);
+    rightHandSideWidget->setLayout(rightHandSideVBox);
     m_entryView = new EntryView(rightHandSideWidget);
 
     m_mainSplitter->setChildrenCollapsible(false);
-    m_mainSplitter->addWidget(m_groupView);
+    m_mainSplitter->addWidget(leftHandSideWidget);
     m_mainSplitter->addWidget(rightHandSideWidget);
     m_mainSplitter->setStretchFactor(0, 30);
     m_mainSplitter->setStretchFactor(1, 70);
@@ -180,6 +191,7 @@ DatabaseWidget::DatabaseWidget(QSharedPointer<Database> db, QWidget* parent)
             m_previewView->setGroup(groupView()->currentGroup());
         }
     });
+    connect(m_groupView, &GroupView::groupSelectionChanged, this, [&](){qobject_cast<TagModel*>(m_tagView->model())->setGroup(currentGroup());});
     connect(m_entryView, SIGNAL(entryActivated(Entry*,EntryModel::ModelColumn)),
         SLOT(entryActivationSignalReceived(Entry*,EntryModel::ModelColumn)));
     connect(m_entryView, SIGNAL(entrySelectionChanged(Entry*)), SLOT(onEntryChanged(Entry*)));
@@ -628,6 +640,15 @@ void DatabaseWidget::copyAttribute(QAction* action)
         setClipboardTextAndMinimize(
             currentEntry->resolveMultiplePlaceholders(currentEntry->attributes()->value(action->data().toString())));
     }
+}
+
+void DatabaseWidget::filterByTag(const QModelIndex& index)
+{
+    // get model and cast to QStringListModel
+    TagModel* tagModel = qobject_cast<TagModel*>(m_tagView->model());
+    // get value at row()
+    QString value = tagModel->tags().at(index.row());
+    search("tag:" + value);
 }
 
 void DatabaseWidget::showTotpKeyQrCode()
