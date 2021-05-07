@@ -98,7 +98,7 @@ DatabaseWidget::DatabaseWidget(QSharedPointer<Database> db, QWidget* parent)
     auto* leftHandSideVBox = new QVBoxLayout();
     auto tagModel = new TagModel(m_db->rootGroup());
     m_tagView->setModel(tagModel);
-    connect(m_tagView, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(filterByTag(QModelIndex)));
+    connect(m_tagView, SIGNAL(clicked(QModelIndex)), this, SLOT(filterByTag(QModelIndex)));
 
     leftHandSideVBox->addWidget(m_groupView);
     leftHandSideVBox->addWidget(m_tagView);
