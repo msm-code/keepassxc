@@ -40,14 +40,15 @@ void TagModel::setGroup(Group* g)
     auto entries = m_group->entries();
     beginResetModel();
     QSet<QString> s;
+    s.insert("");
     for (auto entry : entries) {
         for (auto tag : entry->tags().split(";")) {
-            if (tag != "") {
-                s.insert(tag);
-            }
+            s.insert(tag);
         }
     }
     tagList = s.toList();
+    tagList.sort();
+    tagList[0] = "All"; // Empty string always at the beginning
     endResetModel();
 }
 

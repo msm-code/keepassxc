@@ -648,7 +648,14 @@ void DatabaseWidget::filterByTag(const QModelIndex& index)
     TagModel* tagModel = qobject_cast<TagModel*>(m_tagView->model());
     // get value at row()
     QString value = tagModel->tags().at(index.row());
-    search("tag:" + value);
+
+    if (value == "All") {
+        if (isSearchActive()) {
+            endSearch();
+        }
+    } else {
+        search("tag:" + value);
+    }
 }
 
 void DatabaseWidget::showTotpKeyQrCode()
