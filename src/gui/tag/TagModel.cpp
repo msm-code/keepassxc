@@ -26,6 +26,7 @@
 #include "core/Tools.h"
 #include "keeshare/KeeShare.h"
 #include <QDebug>
+#include "gui/Icons.h"
 
 TagModel::TagModel(Group* g, QObject* parent)
     : QAbstractListModel(parent)
@@ -66,8 +67,12 @@ QVariant TagModel::data(const QModelIndex& index, int role) const
     if (index.row() >= tagList.size())
         return QVariant();
 
+    if (role == Qt::DecorationRole)
+        return icons()->icon(QStringLiteral("label"));
+
     if (role == Qt::DisplayRole)
         return tagList.at(index.row());
+
     else
         return QVariant();
 }

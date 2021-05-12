@@ -98,6 +98,7 @@ DatabaseWidget::DatabaseWidget(QSharedPointer<Database> db, QWidget* parent)
     auto* leftHandSideVBox = new QVBoxLayout();
     auto tagModel = new TagModel(m_db->rootGroup());
     m_tagView->setModel(tagModel);
+    m_tagView->setFrameStyle(QFrame::NoFrame);
     connect(m_tagView, SIGNAL(clicked(QModelIndex)), this, SLOT(filterByTag(QModelIndex)));
 
     leftHandSideVBox->addWidget(m_groupView);
