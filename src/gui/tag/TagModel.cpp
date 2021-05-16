@@ -46,6 +46,11 @@ void TagModel::setGroup(Group* g)
 {
 
     m_group = g;
+    findTags();
+}
+
+void TagModel::findTags()
+{
     auto entries = m_group->entries();
     beginResetModel();
     QSet<QString> s;

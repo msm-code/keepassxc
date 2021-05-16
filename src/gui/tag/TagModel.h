@@ -37,6 +37,7 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
     QStringList entryTags(const Entry* entry); // TODO: move to entry
     QStringList& tags();
+    void findTags();
 
 public slots:
     void setGroup(Group* g);

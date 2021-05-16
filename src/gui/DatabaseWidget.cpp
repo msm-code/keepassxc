@@ -1459,6 +1459,7 @@ void DatabaseWidget::onEntryChanged(Entry* entry)
 {
     if (entry) {
         m_previewView->setEntry(entry);
+        static_cast<TagModel*>(m_tagView->model())->findTags();
     }
 
     emit entrySelectionChanged();
