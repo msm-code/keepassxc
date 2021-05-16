@@ -24,14 +24,22 @@
 #include "core/Group.h"
 #include "core/Metadata.h"
 #include "core/Tools.h"
+#include "gui/Icons.h"
 #include "keeshare/KeeShare.h"
 #include <QDebug>
-#include "gui/Icons.h"
 
 TagModel::TagModel(Group* g, QObject* parent)
     : QAbstractListModel(parent)
 {
     setGroup(g);
+}
+
+// TODO: MOVE to entry, find a better way to delete empty string, figure out delimiter format exported by KeePass
+QStringList TagModel::entryTags(const Entry* entry)
+{
+    auto entryTags = entry->tags().split(";");
+    entryTags.pop_back(); // Remove last empty string
+    return entryTags;
 }
 
 void TagModel::setGroup(Group* g)
@@ -43,7 +51,7 @@ void TagModel::setGroup(Group* g)
     QSet<QString> s;
     s.insert("");
     for (auto entry : entries) {
-        for (auto tag : entry->tags().split(";")) {
+        for (auto tag : entryTags(entry)) {
             s.insert(tag);
         }
     }

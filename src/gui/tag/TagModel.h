@@ -22,8 +22,9 @@
 #include <QSet>
 
 class Group;
-class Tag;
+class Entry;
 
+// TODO: rename as TagGroupModel or make it general
 class TagModel : public QAbstractListModel
 {
     Q_OBJECT
@@ -34,6 +35,7 @@ public:
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+    QStringList entryTags(const Entry* entry); // TODO: move to entry
     QStringList& tags();
 
 public slots:

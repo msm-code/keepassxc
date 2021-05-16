@@ -57,6 +57,7 @@
 #include "gui/entry/AutoTypeAssociationsModel.h"
 #include "gui/entry/EntryAttributesModel.h"
 #include "gui/entry/EntryHistoryModel.h"
+#include "gui/tag/TagModel.h"
 
 EditEntryWidget::EditEntryWidget(QWidget* parent)
     : EditWidget(parent)
@@ -853,7 +854,9 @@ void EditEntryWidget::setForms(Entry* entry, bool restore)
     m_mainUi->usernameComboBox->lineEdit()->setReadOnly(m_history);
     m_mainUi->urlEdit->setReadOnly(m_history);
     m_mainUi->passwordEdit->setReadOnly(m_history);
-    m_mainUi->tagsEdit->setText(entry->tags());
+    TagModel tagModel(entry->group());
+    m_mainUi->tagsList->tags(tagModel.entryTags(entry));
+    m_mainUi->tagsList->completion(tagModel.tags());
     m_mainUi->expireCheck->setEnabled(!m_history);
     m_mainUi->expireDatePicker->setReadOnly(m_history);
     m_mainUi->notesEnabled->setChecked(!config()->get(Config::Security_HideNotes).toBool());
@@ -1158,7 +1161,7 @@ void EditEntryWidget::updateEntryData(Entry* entry) const
     entry->setPassword(m_mainUi->passwordEdit->text());
     entry->setExpires(m_mainUi->expireCheck->isChecked());
     entry->setExpiryTime(m_mainUi->expireDatePicker->dateTime().toUTC());
-    entry->setTags(m_mainUi->tagsEdit->text());
+    entry->setTags(m_mainUi->tagsList->tags().join(";"));
 
     entry->setNotes(m_mainUi->notesEdit->toPlainText());
 
