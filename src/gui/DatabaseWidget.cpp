@@ -645,17 +645,16 @@ void DatabaseWidget::copyAttribute(QAction* action)
 
 void DatabaseWidget::filterByTag(const QModelIndex& index)
 {
-    // get model and cast to QStringListModel
     TagModel* tagModel = qobject_cast<TagModel*>(m_tagView->model());
-    // get value at row()
-    QString value = tagModel->tags().at(index.row());
 
-    if (value == "All") {
+    m_lastTagSelection = tagModel->tags().at(index.row());
+
+    if (m_lastTagSelection == "All") {
         if (isSearchActive()) {
             endSearch();
         }
     } else {
-        search("tag:" + value);
+        search("tag:" + m_lastTagSelection);
     }
 }
 
@@ -1460,6 +1459,7 @@ void DatabaseWidget::onEntryChanged(Entry* entry)
     if (entry) {
         m_previewView->setEntry(entry);
         static_cast<TagModel*>(m_tagView->model())->findTags();
+        restoreTagSidePanelSelection();
     }
 
     emit entrySelectionChanged();
@@ -2149,4 +2149,13 @@ void DatabaseWidget::openDatabaseFromEntry(const Entry* entry, bool inBackground
 
     // Request to open the database file in the background with a password and keyfile
     emit requestOpenDatabase(dbFileInfo.canonicalFilePath(), inBackground, password, keyFileInfo.canonicalFilePath());
+}
+
+void DatabaseWidget::restoreTagSidePanelSelection()
+{
+    auto model = static_cast<TagModel*>(m_tagView->model());
+    auto stringListIndex = model->tags().indexOf(m_lastTagSelection);
+    // If stringListIndex not found, defaults to first index: All tags
+    auto modelIndex = model->index(stringListIndex, 0);
+    m_tagView->setCurrentIndex(modelIndex);
 }
