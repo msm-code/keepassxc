@@ -37,7 +37,8 @@ TagModel::TagModel(Group* g, QObject* parent)
 // TODO: MOVE to entry, find a better way to delete empty string, figure out delimiter format exported by KeePass
 QStringList TagModel::entryTags(const Entry* entry)
 {
-    auto entryTags = entry->tags().split(";");
+    QRegExp rx("(\\ |\\,|\\.|\\:|\\t|\\;)");
+    auto entryTags = entry->tags().split(rx);
     entryTags.pop_back(); // Remove last empty string
     return entryTags;
 }
