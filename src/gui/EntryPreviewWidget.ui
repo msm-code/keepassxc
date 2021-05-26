@@ -409,15 +409,9 @@
                </widget>
               </item>
               <item row="2" column="6" alignment="Qt::AlignTop">
-               <widget class="QLabel" name="entryTagsLabel">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string notr="true">expired</string>
+               <widget class="TagsEdit" name="tagsList">
+                <property name="accessibleName">
+                 <string>Tags list</string>
                 </property>
                </widget>
               </item>
@@ -1217,6 +1211,12 @@
    <class>ElidedLabel</class>
    <extends>QLabel</extends>
    <header>gui/widgets/ElidedLabel.h</header>
+  </customwidget>
+  <customwidget>
+   <class>TagsEdit</class>
+   <extends>QWidget</extends>
+   <header>gui/tag/TagsEdit.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <tabstops>
