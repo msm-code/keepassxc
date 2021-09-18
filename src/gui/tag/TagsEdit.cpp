@@ -146,6 +146,7 @@ struct TagsEdit::Impl
         , blink_status(true)
         , select_start(0)
         , select_size(0)
+        , cross_deleter(true)
         , completer(std::make_unique<QCompleter>())
     {
     }
@@ -159,11 +160,13 @@ struct TagsEdit::Impl
 
     bool inCrossArea(int tag_index, QPoint point) const
     {
-        return crossRect(tags[tag_index].rect)
-                   .adjusted(-tag_cross_radius, 0, 0, 0)
-                   .translated(-ifce->horizontalScrollBar()->value(), -ifce->verticalScrollBar()->value())
-                   .contains(point)
-               && (!cursorVisible() || tag_index != editing_index);
+        return cross_deleter
+                   ? crossRect(tags[tag_index].rect)
+                             .adjusted(-tag_cross_radius, 0, 0, 0)
+                             .translated(-ifce->horizontalScrollBar()->value(), -ifce->verticalScrollBar()->value())
+                             .contains(point)
+                         && (!cursorVisible() || tag_index != editing_index)
+                   : false;
     }
 
     template <class It> void drawTags(QPainter& p, std::pair<It, It> range) const
@@ -186,28 +189,30 @@ struct TagsEdit::Impl
             // draw text
             p.drawText(text_pos, it->text);
 
-            // calc cross rect
-            auto const i_cross_r = crossRect(i_r);
+            if (cross_deleter) {
+                // calc cross rect
+                auto const i_cross_r = crossRect(i_r);
 
-            QPainterPath crossRectBg1, crossRectBg2;
-            crossRectBg1.addRoundedRect(i_cross_r, cornerRadius, cornerRadius);
-            // cover left rounded corners
-            crossRectBg2.addRect(
-                i_cross_r.left(), i_cross_r.bottom(), tag_cross_radius, i_cross_r.top() - i_cross_r.bottom());
-            p.fillPath(crossRectBg1, QColorConstants::Cyan);
-            p.fillPath(crossRectBg2, QColorConstants::Cyan);
+                QPainterPath crossRectBg1, crossRectBg2;
+                crossRectBg1.addRoundedRect(i_cross_r, cornerRadius, cornerRadius);
+                // cover left rounded corners
+                crossRectBg2.addRect(
+                    i_cross_r.left(), i_cross_r.bottom(), tag_cross_radius, i_cross_r.top() - i_cross_r.bottom());
+                p.fillPath(crossRectBg1, QColorConstants::Cyan);
+                p.fillPath(crossRectBg2, QColorConstants::Cyan);
 
-            QPen pen = p.pen();
-            pen.setWidth(2);
+                QPen pen = p.pen();
+                pen.setWidth(2);
 
-            p.save();
-            p.setPen(pen);
-            p.setRenderHint(QPainter::Antialiasing);
-            p.drawLine(QLineF(i_cross_r.center() - QPointF(tag_cross_radius, tag_cross_radius),
-                              i_cross_r.center() + QPointF(tag_cross_radius, tag_cross_radius)));
-            p.drawLine(QLineF(i_cross_r.center() - QPointF(-tag_cross_radius, tag_cross_radius),
-                              i_cross_r.center() + QPointF(-tag_cross_radius, tag_cross_radius)));
-            p.restore();
+                p.save();
+                p.setPen(pen);
+                p.setRenderHint(QPainter::Antialiasing);
+                p.drawLine(QLineF(i_cross_r.center() - QPointF(tag_cross_radius, tag_cross_radius),
+                                  i_cross_r.center() + QPointF(tag_cross_radius, tag_cross_radius)));
+                p.drawLine(QLineF(i_cross_r.center() - QPointF(-tag_cross_radius, tag_cross_radius),
+                                  i_cross_r.center() + QPointF(-tag_cross_radius, tag_cross_radius)));
+                p.restore();
+            }
         }
     }
 
@@ -243,13 +248,15 @@ struct TagsEdit::Impl
     }
 
     template <class It>
-    static void calcRects(QPoint& lt, size_t& row, QRect r, QFontMetrics const& fm, std::pair<It, It> range)
+    void calcRects(QPoint& lt, size_t& row, QRect r, QFontMetrics const& fm, std::pair<It, It> range) const
     {
         for (auto it = range.first; it != range.second; ++it) {
             // calc text rect
             const auto text_w = FONT_METRICS_WIDTH(fm, it->text);
             auto const text_h = fm.height() + fm.leading();
-            auto const w = tag_inner.left() + tag_inner.right() + tag_cross_padding * 2 + tag_cross_width;
+            auto const w = cross_deleter
+                               ? tag_inner.left() + tag_inner.right() + tag_cross_padding * 2 + tag_cross_width
+                               : tag_inner.left() + tag_inner.right();
             auto const h = tag_inner.top() + tag_inner.bottom();
             QRect i_r(lt, QSize(text_w + w, text_h + h));
 
@@ -565,6 +572,7 @@ struct TagsEdit::Impl
     QTextLayout text_layout;
     int select_start;
     int select_size;
+    bool cross_deleter;
     std::unique_ptr<QCompleter> completer;
     int hscroll{0};
 };
@@ -572,6 +580,7 @@ struct TagsEdit::Impl
 TagsEdit::TagsEdit(QWidget* parent)
     : QAbstractScrollArea(parent)
     , impl(std::make_unique<Impl>(this))
+    , m_readOnly(false)
 {
     QSizePolicy size_policy(QSizePolicy::Ignored, QSizePolicy::Preferred);
     size_policy.setHeightForWidth(true);
@@ -591,6 +600,22 @@ TagsEdit::TagsEdit(QWidget* parent)
 }
 
 TagsEdit::~TagsEdit() = default;
+
+void TagsEdit::setReadOnly(bool readOnly)
+{
+    m_readOnly = readOnly;
+    if (m_readOnly) {
+        setFocusPolicy(Qt::NoFocus);
+        setCursor(Qt::ArrowCursor);
+        setAttribute(Qt::WA_InputMethodEnabled, false);
+        impl->cross_deleter = false;
+    } else {
+        setFocusPolicy(Qt::StrongFocus);
+        setCursor(Qt::IBeamCursor);
+        setAttribute(Qt::WA_InputMethodEnabled, true);
+        impl->cross_deleter = true;
+    }
+}
 
 void TagsEdit::resizeEvent(QResizeEvent*)
 {
@@ -618,6 +643,10 @@ void TagsEdit::focusOutEvent(QFocusEvent*)
 void TagsEdit::paintEvent(QPaintEvent*)
 {
     QPainter p(viewport());
+
+    // if (!m_readOnly) {
+    //         style()->drawPrimitive(QStyle::PE_PanelLineEdit, &panel, &p, this);
+    //    }
 
     // clip
     auto const rect = impl->contentsRect();
@@ -890,16 +919,18 @@ QStringList TagsEdit::tags() const
 
 void TagsEdit::mouseMoveEvent(QMouseEvent* event)
 {
-    for (int i = 0; i < impl->tags.size(); ++i) {
-        if (impl->inCrossArea(i, event->pos())) {
-            viewport()->setCursor(Qt::ArrowCursor);
-            return;
+    if (!m_readOnly) {
+        for (int i = 0; i < impl->tags.size(); ++i) {
+            if (impl->inCrossArea(i, event->pos())) {
+                viewport()->setCursor(Qt::ArrowCursor);
+                return;
+            }
         }
-    }
-    if (impl->contentsRect().contains(event->pos())) {
-        viewport()->setCursor(Qt::IBeamCursor);
-    } else {
-        QAbstractScrollArea::mouseMoveEvent(event);
+        if (impl->contentsRect().contains(event->pos())) {
+            viewport()->setCursor(Qt::IBeamCursor);
+        } else {
+            QAbstractScrollArea::mouseMoveEvent(event);
+        }
     }
 }
 

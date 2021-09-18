@@ -53,6 +53,8 @@ public:
     /// Get tags
     QStringList tags() const;
 
+    void setReadOnly(bool readOnly);
+
 signals:
     void tagsEdited();
 
@@ -72,4 +74,5 @@ private:
 
     struct Impl;
     std::unique_ptr<Impl> impl;
+    bool m_readOnly;
 };
