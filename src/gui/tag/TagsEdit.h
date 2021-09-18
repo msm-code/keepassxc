@@ -31,7 +31,8 @@
 
 /// Tag multi-line editor widget
 /// `Space` commits a tag and initiates a new tag edition
-class TagsEdit : public QAbstractScrollArea {
+class TagsEdit : public QAbstractScrollArea
+{
     Q_OBJECT
 
 public:
