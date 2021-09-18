@@ -48,10 +48,11 @@ namespace {
 constexpr int tag_v_spacing = 2;
 constexpr int tag_h_spacing = 3;
 
-constexpr QMargins tag_inner(3, 3, 4, 3);
+constexpr QMargins tag_inner(5, 3, 4, 3);
 
-constexpr int tag_cross_width = 4;
-constexpr int tag_cross_spacing = 2;
+constexpr int tag_cross_width = 5;
+constexpr float tag_cross_radius = tag_cross_width / 2;
+constexpr int tag_cross_padding = 5;
 
 struct Tag {
     bool isEmpty() const noexcept {
@@ -136,14 +137,14 @@ struct TagsEdit::Impl {
           completer(std::make_unique<QCompleter>()) {}
 
     inline QRectF crossRect(QRectF const& r) const {
-        QRectF cross(QPointF{0, 0}, QSizeF{tag_cross_width, tag_cross_width});
-        cross.moveCenter(QPointF(r.right() - tag_cross_width, r.center().y()));
+        QRectF cross(QPointF{0, 0}, QSizeF{tag_cross_width + tag_cross_padding *2, r.top() - r.bottom()});
+        cross.moveCenter(QPointF(r.right() - tag_cross_radius - tag_cross_padding, r.center().y()));
         return cross;
     }
 
     bool inCrossArea(int tag_index, QPoint point) const {
         return crossRect(tags[tag_index].rect)
-                       .adjusted(-tag_cross_spacing, 0, 0, 0)
+                       .adjusted(-tag_cross_radius, 0, 0, 0)
                        .translated(-ifce->horizontalScrollBar()->value(), -ifce->verticalScrollBar()->value())
                        .contains(point)
             && (!cursorVisible() || tag_index != editing_index);
@@ -162,7 +163,8 @@ struct TagsEdit::Impl {
             // draw tag rect
             QColor const blue(0, 96, 100, 150);
             QPainterPath path;
-            path.addRoundedRect(i_r, 4, 4);
+            auto cornerRadius = 4;
+            path.addRoundedRect(i_r, cornerRadius, cornerRadius);
             p.fillPath(path, blue);
 
             // draw text
@@ -171,14 +173,24 @@ struct TagsEdit::Impl {
             // calc cross rect
             auto const i_cross_r = crossRect(i_r);
 
+            QPainterPath crossRectBg1, crossRectBg2;
+            crossRectBg1.addRoundedRect(i_cross_r, cornerRadius, cornerRadius);
+            // cover left rounded corners
+            crossRectBg2.addRect(
+                i_cross_r.left(), i_cross_r.bottom(), tag_cross_radius, i_cross_r.top() - i_cross_r.bottom());
+            p.fillPath(crossRectBg1, QColorConstants::Cyan);
+            p.fillPath(crossRectBg2, QColorConstants::Cyan);
+
             QPen pen = p.pen();
             pen.setWidth(2);
 
             p.save();
             p.setPen(pen);
             p.setRenderHint(QPainter::Antialiasing);
-            p.drawLine(QLineF(i_cross_r.topLeft(), i_cross_r.bottomRight()));
-            p.drawLine(QLineF(i_cross_r.bottomLeft(), i_cross_r.topRight()));
+            p.drawLine(QLineF(i_cross_r.center() - QPointF(tag_cross_radius, tag_cross_radius),
+                              i_cross_r.center() + QPointF(tag_cross_radius, tag_cross_radius)));
+            p.drawLine(QLineF(i_cross_r.center() - QPointF(-tag_cross_radius, tag_cross_radius),
+                              i_cross_r.center() + QPointF(-tag_cross_radius, tag_cross_radius)));
             p.restore();
         }
     }
@@ -217,7 +229,7 @@ struct TagsEdit::Impl {
             // calc text rect
             const auto text_w = FONT_METRICS_WIDTH(fm, it->text);
             auto const text_h = fm.height() + fm.leading();
-            auto const w = tag_inner.left() + tag_inner.right() + tag_cross_spacing + tag_cross_width;
+            auto const w = tag_inner.left() + tag_inner.right() + tag_cross_padding * 2 + tag_cross_width;
             auto const h = tag_inner.top() + tag_inner.bottom();
             QRect i_r(lt, QSize(text_w + w, text_h + h));
 
@@ -667,7 +679,7 @@ QSize TagsEdit::sizeHint() const {
 QSize TagsEdit::minimumSizeHint() const {
     ensurePolished();
     QFontMetrics fm = fontMetrics();
-    QRect rect(0, 0, fm.maxWidth() + tag_cross_spacing + tag_cross_width, fm.height() + fm.leading());
+    QRect rect(0, 0, fm.maxWidth() + tag_cross_padding + tag_cross_width, fm.height() + fm.leading());
     rect += tag_inner + contentsMargins() + viewport()->contentsMargins() + viewportMargins();
     return rect.size();
 }
