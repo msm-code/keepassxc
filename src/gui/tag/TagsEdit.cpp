@@ -737,7 +737,7 @@ void TagsEdit::mousePressEvent(QMouseEvent* event)
 
             // Last tag of the row.
             auto const row = it->row;
-            while (it->row == row && it != std::end(impl->tags)) {
+            while (it != std::end(impl->tags) && it->row == row) {
                 ++it;
             }
 
