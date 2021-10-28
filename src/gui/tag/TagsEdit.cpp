@@ -338,7 +338,9 @@ struct TagsEdit::Impl
     void setEditingIndex(int i)
     {
         assert(i < tags.size());
-        if (currentText().isEmpty()) {
+        auto occurrencesOfCurrentText =
+            std::count_if(tags.cbegin(), tags.cend(), [this](const auto& tag) { return tag.text == currentText(); });
+        if (currentText().isEmpty() || occurrencesOfCurrentText > 1) {
             tags.erase(std::next(tags.begin(), std::ptrdiff_t(editing_index)));
             if (editing_index <= i) { // Do we shift positions after `i`?
                 --i;
@@ -651,7 +653,6 @@ void TagsEdit::paintEvent(QPaintEvent*)
     // clip
     auto const rect = impl->contentsRect();
     p.setClipRect(rect);
-
     if (impl->cursorVisible()) {
         // not terminated tag pos
         auto const& r = impl->currentRect();

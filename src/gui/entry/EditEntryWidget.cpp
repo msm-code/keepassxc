@@ -1161,7 +1161,7 @@ void EditEntryWidget::updateEntryData(Entry* entry) const
     entry->setPassword(m_mainUi->passwordEdit->text());
     entry->setExpires(m_mainUi->expireCheck->isChecked());
     entry->setExpiryTime(m_mainUi->expireDatePicker->dateTime().toUTC());
-    entry->setTags(m_mainUi->tagsList->tags().join(";"));
+    entry->setTags(m_mainUi->tagsList->tags().toSet().toList().join(";")); // remove repeated tags
 
     entry->setNotes(m_mainUi->notesEdit->toPlainText());
 
