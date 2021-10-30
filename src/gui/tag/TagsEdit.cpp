@@ -23,7 +23,7 @@
 */
 
 #include "TagsEdit.h"
-
+#include "gui/MainWindow.h"
 #include <QApplication>
 #include <QCompleter>
 #include <QDebug>
@@ -180,11 +180,12 @@ struct TagsEdit::Impl
                           ifce->fontMetrics().ascent() + ((i_r.height() - ifce->fontMetrics().height()) / 2));
 
             // draw tag rect
-            QColor const blue(0, 96, 100, 150);
+            auto palette = getMainWindow()->palette();
             QPainterPath path;
             auto cornerRadius = 4;
             path.addRoundedRect(i_r, cornerRadius, cornerRadius);
-            p.fillPath(path, blue);
+            p.fillPath(path, palette.brush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Highlight));
+            
 
             // draw text
             p.drawText(text_pos, it->text);
@@ -198,11 +199,12 @@ struct TagsEdit::Impl
                 // cover left rounded corners
                 crossRectBg2.addRect(
                     i_cross_r.left(), i_cross_r.bottom(), tag_cross_radius, i_cross_r.top() - i_cross_r.bottom());
-                p.fillPath(crossRectBg1, QColorConstants::Cyan);
-                p.fillPath(crossRectBg2, QColorConstants::Cyan);
+                p.fillPath(crossRectBg1, palette.highlight());
+                p.fillPath(crossRectBg2, palette.highlight());
 
                 QPen pen = p.pen();
                 pen.setWidth(2);
+                pen.setBrush(palette.highlightedText());
 
                 p.save();
                 p.setPen(pen);
@@ -610,6 +612,7 @@ void TagsEdit::setReadOnly(bool readOnly)
         setFocusPolicy(Qt::NoFocus);
         setCursor(Qt::ArrowCursor);
         setAttribute(Qt::WA_InputMethodEnabled, false);
+        setFrameShape(QFrame::NoFrame);
         impl->cross_deleter = false;
     } else {
         setFocusPolicy(Qt::StrongFocus);
