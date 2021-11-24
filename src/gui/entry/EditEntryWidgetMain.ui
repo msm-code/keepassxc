@@ -129,7 +129,7 @@
       </item>
      </layout>
     </item>
-    <item row="5" column="1">
+    <item row="6" column="1">
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <property name="spacing">
        <number>8</number>
@@ -283,9 +283,12 @@
      </widget>
     </item>
     <item row="5" column="1">
-     <widget class="TagsEdit" name="tagsList">
+     <widget class="TagsEdit" name="tagsList" native="true">
+      <property name="focusPolicy">
+       <enum>Qt::StrongFocus</enum>
+      </property>
       <property name="accessibleName">
-          <string>Tags list</string>
+       <string>Tags list</string>
       </property>
      </widget>
     </item>
@@ -305,18 +308,19 @@
    <header>gui/URLEdit.h</header>
    <container>1</container>
   </customwidget>
-   <customwidget>
-    <class>TagsEdit</class>
-    <extends>QWidget</extends>
-    <header>gui/tag/TagsEdit.h</header>
-    <container>1</container>
-   </customwidget>
+  <customwidget>
+   <class>TagsEdit</class>
+   <extends>QWidget</extends>
+   <header>gui/tag/TagsEdit.h</header>
+   <container>1</container>
+  </customwidget>
  </customwidgets>
  <tabstops>
   <tabstop>titleEdit</tabstop>
   <tabstop>usernameComboBox</tabstop>
   <tabstop>passwordEdit</tabstop>
   <tabstop>urlEdit</tabstop>
+  <tabstop>tagsList</tabstop>
   <tabstop>fetchFaviconButton</tabstop>
   <tabstop>expireCheck</tabstop>
   <tabstop>expireDatePicker</tabstop>
